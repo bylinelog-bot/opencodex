@@ -931,6 +931,11 @@ export async function executeComboResponses(
       finishRequestAttempt(attempt, 499, Date.now() - started, childLog.usage);
       attemptRetained = true;
     };
+    // The row is written from `logCtx`, which copies `childLog` only when the child commits. A
+    // bridge child binds its usage later, at the terminal frame, so the binding is forwarded here
+    // after that point. Left on `childLog`, the row would re-read the bridged wire instead of the
+    // adapter's usage, and that wire has no providerCredits and a context-derived input count.
+    let childCommitted = false;
     const completedTarget = { provider: pick.target.provider, model: pick.target.model };
     const writerGeneration = pick.writerGeneration;
     let consumedChildFailure: ConsumedComboFailure | undefined;
@@ -1007,6 +1012,11 @@ export async function executeComboResponses(
         comboDispatchPermit: hopDecision?.allowed ? hopDecision.permit : undefined,
         comboReplaySnapshot,
         deferCodexResetDerivedCooldown,
+        onBridgeUsageBound: child => {
+          if (!childCommitted) return;
+          logCtx.usageFromBridge = true;
+          if (child.usage) logCtx.usage = child.usage;
+        },
         // Attempt-relative TTFT is recorded HERE (not via childLog.firstOutputMs — a later
         // Object.assign(logCtx, childLog) would overwrite the request-relative value).
         onFirstOutput: () => {
@@ -1090,6 +1100,7 @@ export async function executeComboResponses(
         activeAttemptStartedAt: started,
         resolvedModel: childLog.resolvedModel ?? childLog.model,
       });
+      childCommitted = true;
       options.onCodexAuthContextResolved?.(resolvedAuth);
       options.setTerminalOutcomeRecorder?.(terminalRecorder);
       callbackGate.commit();

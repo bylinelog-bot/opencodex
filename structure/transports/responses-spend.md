@@ -182,6 +182,14 @@ what those sends may cost, and it is the only bound here that survives a restart
 caller is `request-spend.ts`, installed on the execution budget at genuine ingress in `core.ts`
 and parked on the log context so `addFinalRequestLog` can settle it. Native Chat installs the same tracker before its independent physical-send ladder and charges it immediately before each dispatch, so that fast path cannot bypass root, identity or provider-pool ceilings.
 
+The tracker settles with `logCtx.usage`, and so does the row. A combo copies its child's log
+context into that one only when the child commits, while the bridge binds the adapter usage later,
+at the terminal frame. `executeComboResponses` therefore passes each child `onBridgeUsageBound`
+(`core-options.ts`), which `bindKeyUsageFromBridge` calls after it binds; once the child has
+committed, the combo sets `usageFromBridge` and `usage` on its own context. Without that, the row
+and the settlement would read the usage back off the bridged Responses wire, which carries no
+`providerCredits` and derives its input count from the context checkpoint.
+
 Unconfigured requests preserve the legacy counter observer: reservations increment the send
 counter, refunds decrement it, and named reports reconcile prepaid sends. Enforced requests use
 the seed and physical-start protocol below across Responses, native Messages and native Chat.

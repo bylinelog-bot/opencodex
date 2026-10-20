@@ -522,12 +522,11 @@ export async function prepareResponsesTransport(
     logCtx.usageFromBridge = true;
     if (usesApiKeyAccount(route.provider)) {
       logCtx.usage = logCtx.activeAttempt?.usage;
-      return;
-    }
-    if (usage) {
+    } else if (usage) {
       logCtx.usage = usage;
       if (logCtx.activeAttempt) logCtx.activeAttempt.usage = usage;
     }
+    options.onBridgeUsageBound?.(logCtx);
   };
   const selectionIsCurrent = (binding: DispatchBinding | undefined): boolean => {
     if (!anthropicAdmissionIsCurrent()) return false;

@@ -141,6 +141,22 @@ describe("request log token-estimate context-window cap (codex-router PR #140)",
     expect(attempt.usage?.inputTokens).toBe(500_000);
   });
 
+  test("a count the adapter read off the upstream usage frame is not floored and not estimated", () => {
+    const attempt = beginRequestAttempt(1, "kiro", "deepseek-3.2", "kiro");
+    noteAttemptSend(attempt, 100_000);
+    finishRequestAttempt(attempt, 200, 10, { inputTokens: 50_000, outputTokens: 5, upstreamReported: true });
+    expect(attempt.usage?.inputTokens).toBe(50_000);
+    expect(attempt.usage?.estimated).toBeUndefined();
+    expect(attempt.usageStatus).toBe("reported");
+
+    // Without the mark the same figure is still a floor-merged estimate.
+    const unmarked = beginRequestAttempt(1, "kiro", "deepseek-3.2", "kiro");
+    noteAttemptSend(unmarked, 100_000);
+    finishRequestAttempt(unmarked, 200, 10, { inputTokens: 50_000, outputTokens: 5 });
+    expect(unmarked.usage?.inputTokens).toBe(100_000);
+    expect(unmarked.usageStatus).toBe("estimated");
+  });
+
   test("kiro auto has no fixed window and is never guessed", () => {
     const attempt = beginRequestAttempt(1, "kiro", "kiro-auto", "kiro");
     noteAttemptSend(attempt, 500_000);
