@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  aggregateAttemptUsage,
   beginRequestAttempt,
   finishRequestAttempt,
   noteAttemptSend,
@@ -155,6 +156,23 @@ describe("request log token-estimate context-window cap (codex-router PR #140)",
     finishRequestAttempt(unmarked, 200, 10, { inputTokens: 50_000, outputTokens: 5 });
     expect(unmarked.usage?.inputTokens).toBe(100_000);
     expect(unmarked.usageStatus).toBe("estimated");
+  });
+
+  test("an aggregate carries the upstream-reported mark only when every attempt has usage with it", () => {
+    const marked = () => {
+      const attempt = beginRequestAttempt(1, "kiro", "deepseek-3.2", "kiro");
+      finishRequestAttempt(attempt, 200, 10, { inputTokens: 10, outputTokens: 2, upstreamReported: true });
+      return attempt;
+    };
+    const unmarked = beginRequestAttempt(2, "kiro", "deepseek-3.2", "kiro");
+    finishRequestAttempt(unmarked, 200, 10, { inputTokens: 10, outputTokens: 2 });
+
+    expect(aggregateAttemptUsage([marked(), marked()]).usage?.upstreamReported).toBe(true);
+    expect(aggregateAttemptUsage([marked(), unmarked]).usage?.upstreamReported).toBeUndefined();
+    // No usage at all is not "every attempt reported": nothing is aggregated, so nothing is marked.
+    expect(aggregateAttemptUsage([])).toEqual({ status: "unreported" });
+    const silent = beginRequestAttempt(1, "kiro", "deepseek-3.2", "kiro");
+    expect(aggregateAttemptUsage([silent]).usage).toBeUndefined();
   });
 
   test("kiro auto has no fixed window and is never guessed", () => {

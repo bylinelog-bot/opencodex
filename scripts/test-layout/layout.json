@@ -1587,6 +1587,7 @@
     "responses-translated-reset.test.ts": "responses",
     "responses-routed-web-search-fields.test.ts": "responses",
     "responses-self-named-namespace-scrub.test.ts": "responses",
+    "responses-combo-bridge-usage.test.ts": "responses",
     "responses-combo-exhausted-error.test.ts": "responses",
     "responses-combo-run-turn-classified-failure.test.ts": "responses",
     "responses-send-budget-counts.test.ts": "responses",

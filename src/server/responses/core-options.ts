@@ -206,10 +206,10 @@ export interface HandleResponsesOptions {
   /**
    * Set by the combo loop for each child. A child logs into its own context, which the combo
    * copies once when the child commits, and the bridge reports usage after that, at the terminal
-   * frame. The transport calls this when it binds that usage, so the combo can carry the binding
-   * to the context that writes the row.
+   * frame. The transport calls this when it binds that usage on the child's context, so the combo
+   * can carry the binding to the context that writes the row.
    */
-  onBridgeUsageBound?: (childLog: RequestLogContext) => void;
+  onBridgeUsageBound?: () => void;
   /** Child-owned prepaid initial send; capacity remains charged until dispatch or unsent release. */
   comboInitialSend?: { permit: SingleUseDispatchPermit; producerOwned?: boolean };
   /** Exact externally booked combo hop, used for its child's spend preflight and send reports. */

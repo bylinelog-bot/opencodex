@@ -185,8 +185,9 @@ and parked on the log context so `addFinalRequestLog` can settle it. Native Chat
 The tracker settles with `logCtx.usage`, and so does the row. A combo copies its child's log
 context into that one only when the child commits, while the bridge binds the adapter usage later,
 at the terminal frame. `executeComboResponses` therefore passes each child `onBridgeUsageBound`
-(`core-options.ts`), which `bindKeyUsageFromBridge` calls after it binds; once the child has
-committed, the combo sets `usageFromBridge` and `usage` on its own context. Without that, the row
+(`core-options.ts`), which `bindKeyUsageFromBridge` calls after it binds. After the child commits,
+the combo sets `usageFromBridge` and `usage` on its own context; a binding that came earlier waits
+for the commit, and a child that fails or never commits forwards nothing. Without that, the row
 and the settlement would read the usage back off the bridged Responses wire, which carries no
 `providerCredits` and derives its input count from the context checkpoint.
 

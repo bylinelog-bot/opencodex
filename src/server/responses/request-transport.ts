@@ -526,7 +526,7 @@ export async function prepareResponsesTransport(
       logCtx.usage = usage;
       if (logCtx.activeAttempt) logCtx.activeAttempt.usage = usage;
     }
-    options.onBridgeUsageBound?.(logCtx);
+    options.onBridgeUsageBound?.();
   };
   const selectionIsCurrent = (binding: DispatchBinding | undefined): boolean => {
     if (!anthropicAdmissionIsCurrent()) return false;
